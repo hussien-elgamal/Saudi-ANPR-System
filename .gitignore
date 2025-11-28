@@ -1,0 +1,15 @@
+.venv/
+venv/
+env/
+
+__pycache__/
+*.pyc
+
+*.db
+*.csv
+daily_detections.csv
+daily_log.txt
+
+ngrok.exe
+.DS_Store
+

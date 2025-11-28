@@ -1,0 +1,8 @@
+fastapi
+uvicorn
+ultralytics
+paddlepaddle-gpu
+opencv-python-headless
+python-multipart
+numpy
+paddleocr==2.7.3
