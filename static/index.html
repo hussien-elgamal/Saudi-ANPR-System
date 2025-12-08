@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>نظام رصد اللوحات الذكي 🦅</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; text-align: center; background-color: #f0f2f5; margin: 0; }
+        h2 { color: #333; margin-top: 10px; }
+        #video-container { position: relative; display: inline-block; width: 100%; max-width: 640px; }
+        video { width: 100%; border-radius: 10px; border: 3px solid #ccc; }
+        #overlay { position: absolute; top: 10px; left: 10px; color: white; font-size: 18px; background: rgba(0,0,0,0.6); padding: 5px 10px; border-radius: 5px; display: none; }
+        #status-box { margin-top: 10px; padding: 15px; font-size: 20px; font-weight: bold; display: none; border-radius: 8px; width: 90%; margin-left: auto; margin-right: auto; }
+        .safe { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .danger { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; animation: blink 1s infinite; }
+        @keyframes blink { 50% { opacity: 0.5; } }
+        button { padding: 10px 20px; font-size: 18px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+
+    <h2>🦅 نظام الصقر للرصد الآلي</h2>
+    <button onclick="startCamera()">تشغيل الكاميرا 📷</button>
+    
+    <div id="video-container">
+        <video id="video" autoplay playsinline></video>
+        <div id="overlay">جاري المعالجة...</div>
+    </div>
+
+    <div id="status-box"></div>
+
+    <canvas id="canvas" style="display:none;"></canvas>
+
+    <script>
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const statusBox = document.getElementById('status-box');
+        const overlay = document.getElementById('overlay');
+        let isProcessing = false;
+
+        async function startCamera() {
+            try {
+                // طلب الكاميرا الخلفية للموبايل
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { facingMode: "environment", width: { ideal: 1280 }, height: { ideal: 720 } } 
+                });
+                video.srcObject = stream;
+                
+                // بدء إرسال الصور كل ثانية (1000 مللي ثانية)
+                setInterval(captureAndSend, 1000); 
+            } catch (err) {
+                alert("تعذر الوصول للكاميرا: " + err);
+            }
+        }
+
+        function captureAndSend() {
+            if (isProcessing) return; // لو السيرفر مشغول، استنى
+            isProcessing = true;
+
+            // رسم اللقطة الحالية على الكانفاس
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            canvas.getContext('2d').drawImage(video, 0, 0);
+
+            // تحويل الصورة لملف وإرسالها
+            canvas.toBlob(blob => {
+                const formData = new FormData();
+                formData.append('file', blob, 'frame.jpg');
+
+                // إظهار علامة التحميل
+                overlay.style.display = 'block';
+
+                fetch('/detect/', { method: 'POST', body: formData })
+                .then(response => response.json())
+                .then(data => {
+                    overlay.style.display = 'none';
+                    if (data.status === 'success' && data.plates.length > 0) {
+                        const plate = data.plates[0];
+                        const plateText = plate.full_plate_ar;
+                        const isWanted = plate.is_wanted;
+
+                        statusBox.style.display = 'block';
+                        statusBox.innerText = `اللوحة: ${plateText}`;
+                        
+                        if (isWanted) {
+                            statusBox.className = 'danger';
+                            statusBox.innerText += "\n🚨 مطلوبة أمنياً 🚨";
+                            // تشغيل اهتزاز للموبايل لو مطلوبة
+                            if (navigator.vibrate) navigator.vibrate([500, 200, 500]);
+                        } else {
+                            statusBox.className = 'safe';
+                            statusBox.innerText += "\n✅ سليمة";
+                        }
+                    } else {
+                        statusBox.style.display = 'none';
+                    }
+                    isProcessing = false;
+                })
+                .catch(err => {
+                    console.error(err);
+                    isProcessing = false;
+                });
+            }, 'image/jpeg', 0.7); // جودة 70% للسرعة
+        }
+    </script>
+</body>
+</html>
