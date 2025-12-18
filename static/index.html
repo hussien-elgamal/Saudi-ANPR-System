@@ -2,104 +2,228 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>نظام رصد اللوحات الذكي 🦅</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Saudi ANPR - Mobile</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; text-align: center; background-color: #f0f2f5; margin: 0; }
-        h2 { color: #333; margin-top: 10px; }
-        #video-container { position: relative; display: inline-block; width: 100%; max-width: 640px; }
-        video { width: 100%; border-radius: 10px; border: 3px solid #ccc; }
-        #overlay { position: absolute; top: 10px; left: 10px; color: white; font-size: 18px; background: rgba(0,0,0,0.6); padding: 5px 10px; border-radius: 5px; display: none; }
-        #status-box { margin-top: 10px; padding: 15px; font-size: 20px; font-weight: bold; display: none; border-radius: 8px; width: 90%; margin-left: auto; margin-right: auto; }
-        .safe { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
-        .danger { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; animation: blink 1s infinite; }
-        @keyframes blink { 50% { opacity: 0.5; } }
-        button { padding: 10px 20px; font-size: 18px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; margin-bottom: 10px; }
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background-color: #0d1117; 
+            color: #c9d1d9; 
+            margin: 0; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            height: 100vh;
+        }
+        
+        /* حاوية الفيديو */
+        .video-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin-top: 10px;
+            border-bottom: 2px solid #30363d;
+        }
+
+        video { 
+            width: 100%; 
+            height: auto; 
+            display: block;
+            /* مهم جداً للموبايل */
+            object-fit: cover; 
+        }
+
+        /* مربع التركيز (عشان المستخدم يعرف يوجه الكاميرا) */
+        .scan-region {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 80%;
+            height: 150px;
+            border: 2px solid rgba(0, 255, 0, 0.5);
+            border-radius: 10px;
+            box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.5);
+            pointer-events: none;
+        }
+
+        .scan-text {
+            position: absolute;
+            top: -30px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #00ff00;
+            font-weight: bold;
+            text-shadow: 1px 1px 2px black;
+        }
+
+        /* منطقة النتائج */
+        #result-box {
+            width: 90%;
+            max-width: 600px;
+            padding: 15px;
+            text-align: center;
+            background: #161b22;
+            border-radius: 10px;
+            margin-top: 15px;
+            border: 1px solid #30363d;
+            min-height: 80px;
+        }
+
+        h1 { margin: 0; font-size: 2.5rem; color: #ffffff; }
+        p { margin: 5px 0 0 0; color: #8b949e; }
+
+        /* الأزرار */
+        .controls { margin-top: 10px; }
+        
+        button {
+            background: #238636;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        button:active { transform: scale(0.98); }
+        
+        .status-dot {
+            height: 10px; width: 10px; 
+            background-color: #bbb; 
+            border-radius: 50%; 
+            display: inline-block;
+            margin-left: 5px;
+        }
     </style>
 </head>
 <body>
 
-    <h2>🦅 نظام الصقر للرصد الآلي</h2>
-    <button onclick="startCamera()">تشغيل الكاميرا 📷</button>
-    
-    <div id="video-container">
-        <video id="video" autoplay playsinline></video>
-        <div id="overlay">جاري المعالجة...</div>
+    <div class="video-container">
+        <video id="video" autoplay playsinline muted></video>
+        <div class="scan-region">
+            <div class="scan-text">ضع اللوحة هنا</div>
+        </div>
+        <canvas id="canvas" style="display:none;"></canvas>
     </div>
 
-    <div id="status-box"></div>
+    <div class="controls">
+        <span id="status-dot" class="status-dot"></span>
+        <span id="status-text">الجهاز جاهز</span>
+        <br><br>
+        <button id="startBtn" onclick="initCamera()">📸 تشغيل الكاميرا</button>
+        <select id="cameraSelect" style="display:none; padding:10px; border-radius:5px; margin-top:5px;"></select>
+    </div>
 
-    <canvas id="canvas" style="display:none;"></canvas>
+    <div id="result-box">
+        <h1 id="plate-number">---</h1>
+        <p id="plate-info">في انتظار الكشف...</p>
+    </div>
 
     <script>
         const video = document.getElementById('video');
         const canvas = document.getElementById('canvas');
-        const statusBox = document.getElementById('status-box');
-        const overlay = document.getElementById('overlay');
-        let isProcessing = false;
+        const plateTitle = document.getElementById('plate-number');
+        const plateInfo = document.getElementById('plate-info');
+        const statusDot = document.getElementById('status-dot');
+        const cameraSelect = document.getElementById('cameraSelect');
+        const startBtn = document.getElementById('startBtn');
 
-        async function startCamera() {
+        let isScanning = false;
+
+        // 1. دالة تهيئة الكاميرا الذكية
+        async function initCamera() {
+            startBtn.style.display = 'none'; // إخفاء الزر بعد الضغط
+            
+            // التأكد من دعم المتصفح
+            if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) {
+                alert("المتصفح لا يدعم الوصول للكاميرا. جرب Chrome أو Safari.");
+                return;
+            }
+
             try {
-                // طلب الكاميرا الخلفية للموبايل
-                const stream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { facingMode: "environment", width: { ideal: 1280 }, height: { ideal: 720 } } 
-                });
+                // جلب قائمة الكاميرات المتوفرة
+                const devices = await navigator.mediaDevices.enumerateDevices();
+                const videoDevices = devices.filter(device => device.kind === 'videoinput');
+                
+                // لو فيه أكتر من كاميرا، نختار الخلفية
+                let constraints = {
+                    video: {
+                        facingMode: { ideal: "environment" }, // طلب الكاميرا الخلفية
+                        width: { ideal: 640 },  // تقليل الدقة للسرعة
+                        height: { ideal: 480 }
+                    }
+                };
+
+                // تشغيل الكاميرا
+                const stream = await navigator.mediaDevices.getUserMedia(constraints);
                 video.srcObject = stream;
                 
-                // بدء إرسال الصور كل ثانية (1000 مللي ثانية)
-                setInterval(captureAndSend, 1000); 
+                // التأكد إن الفيديو اشتغل فعلاً
+                video.onloadedmetadata = () => {
+                    video.play();
+                    isScanning = true;
+                    statusDot.style.backgroundColor = "#00ff00"; // أخضر
+                    document.getElementById('status-text').innerText = "جاري المسح...";
+                    requestAnimationFrame(sendFrame); // بدء اللوب
+                };
+
             } catch (err) {
-                alert("تعذر الوصول للكاميرا: " + err);
+                console.error(err);
+                alert("خطأ في تشغيل الكاميرا: " + err.message + "\nتأكد من الرابط HTTPS ومن السماح للكاميرا.");
+                startBtn.style.display = 'inline-block';
             }
         }
 
-        function captureAndSend() {
-            if (isProcessing) return; // لو السيرفر مشغول، استنى
-            isProcessing = true;
+        // 2. دالة الإرسال المستمر (Loop)
+        async function sendFrame() {
+            if (!isScanning) return;
 
-            // رسم اللقطة الحالية على الكانفاس
+            // أخذ لقطة من الفيديو
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
-            canvas.getContext('2d').drawImage(video, 0, 0);
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-            // تحويل الصورة لملف وإرسالها
-            canvas.toBlob(blob => {
+            // تحويلها لصورة وارسالها
+            canvas.toBlob(async (blob) => {
+                if (!blob) return;
+
                 const formData = new FormData();
-                formData.append('file', blob, 'frame.jpg');
+                formData.append("file", blob, "scan.jpg");
 
-                // إظهار علامة التحميل
-                overlay.style.display = 'block';
+                try {
+                    const response = await fetch("/detect/", {
+                        method: "POST",
+                        body: formData
+                    });
 
-                fetch('/detect/', { method: 'POST', body: formData })
-                .then(response => response.json())
-                .then(data => {
-                    overlay.style.display = 'none';
-                    if (data.status === 'success' && data.plates.length > 0) {
-                        const plate = data.plates[0];
-                        const plateText = plate.full_plate_ar;
-                        const isWanted = plate.is_wanted;
-
-                        statusBox.style.display = 'block';
-                        statusBox.innerText = `اللوحة: ${plateText}`;
-                        
-                        if (isWanted) {
-                            statusBox.className = 'danger';
-                            statusBox.innerText += "\n🚨 مطلوبة أمنياً 🚨";
-                            // تشغيل اهتزاز للموبايل لو مطلوبة
-                            if (navigator.vibrate) navigator.vibrate([500, 200, 500]);
+                    if (response.ok) {
+                        const data = await response.json();
+                        if (data.status === "success" && data.plates.length > 0) {
+                            // تم كشف لوحة
+                            const plate = data.plates[0];
+                            plateTitle.innerText = plate.full_plate_ar;
+                            plateInfo.innerText = `الدقة: ${(plate.confidence * 100).toFixed(0)}%`;
+                            plateTitle.style.color = "#00ff00";
+                            
+                            // ومضة (Effect) عند الكشف
+                            document.getElementById('result-box').style.borderColor = "#00ff00";
+                            setTimeout(() => {
+                                document.getElementById('result-box').style.borderColor = "#30363d";
+                            }, 300);
                         } else {
-                            statusBox.className = 'safe';
-                            statusBox.innerText += "\n✅ سليمة";
+                            // لم يتم كشف شيء (عادي)
+                            plateTitle.style.color = "#ffffff";
                         }
-                    } else {
-                        statusBox.style.display = 'none';
                     }
-                    isProcessing = false;
-                })
-                .catch(err => {
-                    console.error(err);
-                    isProcessing = false;
-                });
+                } catch (e) {
+                    console.error("Network error", e);
+                }
+                
+                // تكرار العملية (ولكن بذكاء: لو النت بطيء نستنى شوية)
+                setTimeout(() => requestAnimationFrame(sendFrame), 500); // 0.5 ثانية تأخير لراحة السيرفر
+
             }, 'image/jpeg', 0.7); // جودة 70% للسرعة
         }
     </script>

@@ -42,7 +42,7 @@ The following screenshots demonstrate the system running in a live environment, 
 
 ---
 
-## 🏗️ System Architecture
+## 🏗️ System Architecture 
 VisionGate follows a scalable **Microservices Architecture**, capable of processing streams from CCTV RTSP feeds or HTTP Mobile uploads.
 
 ```mermaid
@@ -72,11 +72,12 @@ graph TD
     
     DB -- "Authorized" --> Gate
     DB -- "WANTED!" --> Alert
+
+
 🌍 Real-World Use Cases
 1. Smart Parking (Ticketless Entry)
 Automating entry for thousands of cars daily with high throughput.
 
-Code snippet
 
 sequenceDiagram
     participant Car as 🚗 Vehicle
@@ -93,7 +94,6 @@ sequenceDiagram
 2. Law Enforcement (Patrol Units)
 Helping officers identify stolen vehicles in real-time.
 
-Code snippet
 
 sequenceDiagram
     participant Officer as 👮 Mobile App
@@ -109,6 +109,7 @@ sequenceDiagram
     else Vehicle Clear
         API-->>Officer: ✅ Status Clear
     end
+
 🛠️ Technical Highlights
 🔹 The Hybrid AI Pipeline
 Standard models fail on angled plates common in CCTV setups. VisionGate uses a custom pipeline:
@@ -131,10 +132,10 @@ Syntax Enforcement: Validates [3 Letters] + [3-4 Numbers] structure.
 💻 Installation & Setup
 Prerequisites: Python 3.9+, CUDA Toolkit (Optional).
 
-Bash
+
 
 # 1. Clone the Repository
-git clone [https://github.com/hussien-elgamal/Saudi-ANPR-System.git](https://github.com/hussien-elgamal/Saudi-ANPR-System.git)
+git clone https://github.com/hussien-elgamal/Saudi-ANPR-System.git
 cd Saudi-ANPR-System
 
 # 2. Install Dependencies
@@ -145,7 +146,7 @@ uvicorn api.main:app --reload --host 0.0.0.0 --port 8000
 API Response Example
 POST /detect/
 
-JSON
+
 
 {
   "status": "success",
