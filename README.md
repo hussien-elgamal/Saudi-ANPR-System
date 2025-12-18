@@ -52,32 +52,8 @@ VisionGate follows a **scalable microservices architecture**, capable of process
 - Mobile HTTPS uploads  
 - CCTV RTSP video streams  
 
-```mermaid
-graph TD
-    subgraph "📍 Input Layer"
-        Mobile[📱 Mobile Patrol App]
-        CCTV[📹 Surveillance CCTV]
-    end
+```
 
-    subgraph "⚙️ VisionGate Engine"
-        PP[🎨 Preprocessing<br/>CLAHE & Sharpening]
-        Det[🧠 YOLOv8 Detection]
-        Rec[📖 PaddleOCR Recognition]
-        Logic[🇸🇦 Saudi Plate Logic Mapper]
-    end
-
-    subgraph "🚦 Security & Action Layer"
-        DB[(Hotlist Database)]
-        Gate[🚧 IoT Gate]
-        Alert[🚨 Security Dashboard]
-    end
-
-    Mobile -->|HTTPS| PP
-    CCTV -->|RTSP| PP
-    PP --> Det --> Rec --> Logic
-    Logic --> DB
-    DB --> Gate
-    DB --> Alert
 🌍 Real-World Use Cases
 1. Smart Parking (Ticketless Entry)
 Automating entry for thousands of cars daily with high throughput.
