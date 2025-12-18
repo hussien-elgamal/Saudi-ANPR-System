@@ -10,8 +10,7 @@
 
 <br>
 
-**A High-Performance, Hybrid AI System for Real-Time Saudi License Plate Recognition.**
-<br>
+**A High-Performance, Hybrid AI System for Real-Time Saudi License Plate Recognition**  
 *Engineered for Security Patrols, Smart Airports, and Gated Communities.*
 
 </div>
@@ -19,65 +18,69 @@
 ---
 
 ## 📖 Executive Summary
-**VisionGate** is a production-grade microservice designed to automate vehicle access control and security monitoring in the KSA region.
 
-Unlike generic OCR scripts, VisionGate is engineered to handle **Real-World Chaos**:
-* **Motion Blur:** Captures clear text from moving vehicles.
-* **Angled Views:** Reads plates up to 45° skew using custom geometry logic.
-* **Dual Language:** Simultaneously parses Arabic and English characters.
+**VisionGate** is a **production-grade ANPR microservice** designed for real-world vehicle security and access control in the **Kingdom of Saudi Arabia**.
 
-The system is deployed as a **Mobile-First Solution**, allowing security officers to scan vehicles directly via a secure web interface connected to the central API.
+Unlike generic OCR projects, VisionGate is engineered to handle **real operational challenges**:
+
+- 🚗 **Motion Blur** — Reads plates from moving vehicles  
+- 📐 **Angled Views** — Supports up to **45° skew**  
+- 🌙 **Low Light & Glare** — Image enhancement via CLAHE  
+- 🌍 **Dual Language** — Arabic & English plates simultaneously  
+
+The system is **mobile-first**, allowing security officers to scan vehicles directly from their phones while all AI processing runs securely on the backend.
 
 ---
 
-## 📱 Live Mobile Deployment
-The following screenshots demonstrate the system running in a live environment, accessed via a mobile patrol device using a secure tunnel.
+## 📱 Live Mobile Deployment (Real Screenshots)
 
-| **Live Feed & Detection** | **Instant Recognition & Logging** |
-|:-------------------------:|:---------------------------------:|
+The following screenshots are **real captures from a live mobile patrol deployment**.
+
+| Live Detection | Recognition & Logging |
+|:--------------:|:---------------------:|
 | <img src="assets/img1.jpeg" width="300"> | <img src="assets/img2.jpeg" width="300"> |
-| *Real-time detection with bounding boxes* | *< 100ms Inference & Hotlist Checking* |
+| Real-time bounding boxes | < 100ms inference & hotlist check |
 
-> **Note:** The UI provides instant visual feedback (Green/Red) to the officer based on the vehicle's security status.
+> 🟢 Green / 🔴 Red visual feedback is provided instantly based on vehicle status.
 
 ---
 
-## 🏗️ System Architecture 
-VisionGate follows a scalable **Microservices Architecture**, capable of processing streams from CCTV RTSP feeds or HTTP Mobile uploads.
+## 🏗️ System Architecture
+
+VisionGate follows a **scalable microservices architecture**, capable of processing:
+
+- Mobile HTTPS uploads  
+- CCTV RTSP video streams  
 
 ```mermaid
 graph TD
-    subgraph "📍 Input Layer (The Edge)"
+    subgraph "📍 Input Layer"
         Mobile[📱 Mobile Patrol App]
         CCTV[📹 Surveillance CCTV]
     end
 
-    subgraph "⚙️ VisionGate Engine (GPU Cluster)"
+    subgraph "⚙️ VisionGate Engine"
         PP[🎨 Preprocessing<br/>CLAHE & Sharpening]
-        Det[🧠 YOLOv8<br/>Localization]
-        Rec[📖 PaddleOCR<br/>Unclip Ratio 1.8]
-        Logic[🇸🇦 Saudi Syntax Mapper]
+        Det[🧠 YOLOv8 Detection]
+        Rec[📖 PaddleOCR Recognition]
+        Logic[🇸🇦 Saudi Plate Logic Mapper]
     end
 
-    subgraph "💾 Action & Security Layer"
-        DB[(Wanted Database)]
-        Gate[🚧 IoT Barrier]
+    subgraph "🚦 Security & Action Layer"
+        DB[(Hotlist Database)]
+        Gate[🚧 IoT Gate]
         Alert[🚨 Security Dashboard]
     end
 
-    Mobile -->|HTTPS Post| PP
-    CCTV -->|RTSP Stream| PP
+    Mobile -->|HTTPS| PP
+    CCTV -->|RTSP| PP
     PP --> Det --> Rec --> Logic
-    Logic -->|Normalized Text| DB
-    
-    DB -- "Authorized" --> Gate
-    DB -- "WANTED!" --> Alert
-
-
+    Logic --> DB
+    DB --> Gate
+    DB --> Alert
 🌍 Real-World Use Cases
 1. Smart Parking (Ticketless Entry)
 Automating entry for thousands of cars daily with high throughput.
-
 
 sequenceDiagram
     participant Car as 🚗 Vehicle
@@ -91,10 +94,9 @@ sequenceDiagram
     API->>API: Validate Saudi Syntax
     API-->>Gate: {status: "Authorized", plate: "1234 KSA"}
     Gate->>Car: Opens Barrier (0.2s Latency)
+
 2. Law Enforcement (Patrol Units)
-Helping officers identify stolen vehicles in real-time.
-
-
+Helping officers identify stolen vehicles in real-time
 sequenceDiagram
     participant Officer as 👮 Mobile App
     participant API as 🦅 VisionGate API
@@ -110,6 +112,22 @@ sequenceDiagram
         API-->>Officer: ✅ Status Clear
     end
 
+2. Law Enforcement (Patrol Units)
+Helping officers identify stolen vehicles in real-time.
+sequenceDiagram
+    participant Officer as 👮 Mobile App
+    participant API as 🦅 VisionGate API
+    participant DB as 💾 Hotlist DB
+
+    Officer->>API: Captures Plate Image
+    API->>DB: Check "Wanted" Status
+    
+    alt Vehicle is Wanted
+        DB-->>API: ALERT: Stolen Vehicle!
+        API-->>Officer: 🚨 RED ALERT SCREEN
+    else Vehicle Clear
+        API-->>Officer: ✅ Status Clear
+    end
 🛠️ Technical Highlights
 🔹 The Hybrid AI Pipeline
 Standard models fail on angled plates common in CCTV setups. VisionGate uses a custom pipeline:
@@ -130,12 +148,11 @@ Spatial Logic: Prioritizes the right-most 3 letters (Arabic standard).
 Syntax Enforcement: Validates [3 Letters] + [3-4 Numbers] structure.
 
 💻 Installation & Setup
+
 Prerequisites: Python 3.9+, CUDA Toolkit (Optional).
 
-
-
 # 1. Clone the Repository
-git clone https://github.com/hussien-elgamal/Saudi-ANPR-System.git
+git clone [https://github.com/hussien-elgamal/Saudi-ANPR-System.git](https://github.com/hussien-elgamal/Saudi-ANPR-System.git)
 cd Saudi-ANPR-System
 
 # 2. Install Dependencies
@@ -143,10 +160,9 @@ pip install -r requirements.txt
 
 # 3. Run the Microservice
 uvicorn api.main:app --reload --host 0.0.0.0 --port 8000
+
 API Response Example
 POST /detect/
-
-
 
 {
   "status": "success",
