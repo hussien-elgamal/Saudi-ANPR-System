@@ -35,7 +35,7 @@ The following screenshots demonstrate the system running in a live environment, 
 
 | **Live Feed & Detection** | **Instant Recognition & Logging** |
 |:-------------------------:|:---------------------------------:|
-| <img src="docs/demo1.jpg" width="300"> | <img src="docs/demo2.jpg" width="300"> |
+| <img src="assets/img1.jpeg" width="300"> | <img src="assets/img2.jpeg" width="300"> |
 | *Real-time detection with bounding boxes* | *< 100ms Inference & Hotlist Checking* |
 
 > **Note:** The UI provides instant visual feedback (Green/Red) to the officer based on the vehicle's security status.
@@ -134,8 +134,8 @@ Prerequisites: Python 3.9+, CUDA Toolkit (Optional).
 Bash
 
 # 1. Clone the Repository
-git clone [https://github.com/YourUsername/VisionGate.git](https://github.com/YourUsername/VisionGate.git)
-cd VisionGate
+git clone [https://github.com/hussien-elgamal/Saudi-ANPR-System.git](https://github.com/hussien-elgamal/Saudi-ANPR-System.git)
+cd Saudi-ANPR-System
 
 # 2. Install Dependencies
 pip install -r requirements.txt
